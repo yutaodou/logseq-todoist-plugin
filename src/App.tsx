@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 import "@logseq/libs";
-import { getAllLabels, getAllProjects, removePrefix } from "./helpersTodoist";
+import { getAllLabels, getAllProjects, removePrefix } from "./services/todoistHelpers";
 import axios from "axios";
 
 export default function App(props: {

@@ -21,10 +21,7 @@ export function handleContentWithUrlAndTodo(content: string, task: any) {
   content = retrieveAppendTodo ? `TODO ${content}` : content;
   content = task.due
     ? `${content}
-DEADLINE: <${task.due.date} ${getDayInText(new Date(task.due.date)).substring(
-        0,
-        3
-      )}>`
+DEADLINE: <${task.due.date} ${getDayInText(new Date(task.due.date)).substring(0, 3)}>`
     : content;
 
   return content;

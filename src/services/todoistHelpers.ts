@@ -1,23 +1,12 @@
-import {
-  Label,
-  Project,
-  Task,
-  TodoistApi,
-} from "@doist/todoist-api-typescript";
+import { Label, Project, Task, TodoistApi } from "@doist/todoist-api-typescript";
 import { BlockEntity } from "@logseq/libs/dist/LSPlugin.user";
-import {
-  getIdFromString,
-  getNameFromString,
-  handleContentWithUrlAndTodo,
-} from "../utils/parseStrings";
+import { getIdFromString, getNameFromString, handleContentWithUrlAndTodo } from "../utils/parseStrings";
 
 export async function getAllProjects() {
   try {
     const api = new TodoistApi(logseq.settings!.apiToken);
     const allProjects: Project[] = await api.getProjects();
-    let projArr = allProjects.map(
-      (project) => `${project.name} (${project.id})`
-    );
+    let projArr = allProjects.map((project) => `${project.name} (${project.id})`);
     projArr.unshift("--- ---");
     return projArr;
   } catch (e) {
@@ -76,10 +65,7 @@ export async function sendTaskToTodoist(
 
     logseq.UI.showMsg("Task sent!", "success");
   } catch (e) {
-    logseq.UI.showMsg(
-      `Task not sent! Reason: ${(e as Error).message}`,
-      "error"
-    );
+    logseq.UI.showMsg(`Task not sent! Reason: ${(e as Error).message}`, "error");
   }
 }
 
@@ -98,17 +84,11 @@ async function handleComments(
   if (comments.length > 0) {
     for (const comment of comments) {
       if (comment.attachment) {
-        obj[
-          "properties"
-        ].attachment = `[${comment.attachment.fileName}](${comment.attachment.fileUrl})`;
+        obj["properties"].attachment = `[${comment.attachment.fileName}](${comment.attachment.fileUrl})`;
       }
       if (comment.content) {
         let content = obj["properties"].comments;
-        obj["properties"].comments = (
-          content +
-          ", " +
-          comment.content
-        ).substring(1);
+        obj["properties"].comments = (content + ", " + comment.content).substring(1);
       }
     }
   }
@@ -157,7 +137,7 @@ async function retrieveTasksHelper(flag: string) {
   ) {
     for (const t of allTasks) {
       for (const u of parentTasks) {
-        if (t.parentId == u.properties.todoistid) {
+        if (t.parentId == u.properties?.todoistid) {
           let obj = {
             content: handleContentWithUrlAndTodo(t.content, t),
             children: [],
@@ -189,20 +169,14 @@ export async function retrieveTasks(event: { uuid: string }, flag: string) {
   const { retrieveDefaultProject, projectNameAsParentBlk } = logseq.settings!;
 
   if (retrieveDefaultProject === "--- ---" || !retrieveDefaultProject) {
-    logseq.UI.showMsg(
-      "Please select a default project in the plugin settings!",
-      "error"
-    );
+    logseq.UI.showMsg("Please select a default project in the plugin settings!", "error");
     return;
   }
 
   const tasksArr = await retrieveTasksHelper(flag);
 
   projectNameAsParentBlk
-    ? await logseq.Editor.updateBlock(
-        event.uuid,
-        `[[${getNameFromString(retrieveDefaultProject)}]]`
-      )
+    ? await logseq.Editor.updateBlock(event.uuid, `[[${getNameFromString(retrieveDefaultProject)}]]`)
     : "";
 
   if (logseq.settings!.enableTodoistSync) {
@@ -226,29 +200,27 @@ export async function syncTask(event: { uuid: string }) {
   // if parent blocks has child blocks, remove them
   if (blk!.children!.length > 0) {
     for (const block of blk!.children!) {
-      if (!(block as BlockEntity).properties!.todoistid) {
-        const { sendDefaultProject, sendDefaultLabel, sendDefaultDeadline } =
-          logseq.settings!;
+      const blockEntity = block as BlockEntity;
+      if (!blockEntity.properties?.todoistid) {
+        const { sendDefaultProject, sendDefaultLabel, sendDefaultDeadline } = logseq.settings!;
 
         // Insert send task
         await sendTaskToTodoist(
-          (block as BlockEntity).uuid,
-          (block as BlockEntity).content,
+          blockEntity.uuid,
+          blockEntity.content,
           getIdFromString(sendDefaultProject),
           getIdFromString(sendDefaultLabel),
           sendDefaultDeadline ? "today" : ""
         );
 
-        await logseq.Editor.removeBlock((block as BlockEntity).uuid);
+        await logseq.Editor.removeBlock(blockEntity.uuid);
       } else {
-        await logseq.Editor.removeBlock((block as BlockEntity).uuid);
+        await logseq.Editor.removeBlock(blockEntity.uuid);
       }
     }
   }
 
-  const tasksArr = await retrieveTasksHelper(
-    getIdFromString(logseq.settings!.retrieveDefaultProject)
-  );
+  const tasksArr = await retrieveTasksHelper(getIdFromString(logseq.settings!.retrieveDefaultProject));
 
   // insert blocks retrieved
   await logseq.Editor.insertBatchBlock(event.uuid, tasksArr, {
@@ -272,4 +244,21 @@ export async function syncTask(event: { uuid: string }) {
   }
 
   logseq.UI.showMsg("Sync complete", "success");
+}
+
+export function removePrefix(content: string) {
+  const prefixes = ["TODO", "DOING", "NOW", "LATER", "WAITING"];
+  let newContent: string = content;
+  for (let p of prefixes) {
+    if (newContent.startsWith(p)) {
+      newContent = newContent.replace(p, "");
+    }
+  }
+
+  // Remove LOGBOOK if have
+  if (newContent.includes("LOGBOOK")) {
+    newContent = newContent.substring(0, newContent.indexOf("LOGBOOK"));
+  }
+
+  return newContent;
 }

@@ -1,13 +1,13 @@
 import "@logseq/libs";
-import handleListeners from "./utils/handleListeners";
-import callSettings from "./services/settings";
 import React from "react";
 import ReactDOM from "react-dom";
-import SendTask from "./components/SendTask";
 import "./App.css";
+import SendTask from "./components/SendTask";
+import callSettings from "./services/settings";
 import { retrieveTasks, sendTaskToTodoist } from "./services/todoistHelpers";
-import { getIdFromString } from "./utils/parseStrings";
 import generateUniqueId from "./utils/generateUniqueId";
+import handleListeners from "./utils/handleListeners";
+import { getIdFromString } from "./utils/parseStrings";
 
 async function main() {
   console.log("logseq-todoist-plugin loaded");
@@ -56,9 +56,7 @@ async function main() {
   logseq.Editor.registerSlashCommand(
     "Todoist: Retrieve Tasks",
     async function (e) {
-      await retrieveTasks(
-        e,
-        getIdFromString(logseq.settings!.retrieveDefaultProject)
+      await retrieveTasks(e, getIdFromString(logseq.settings!.retrieveDefaultProject)
       );
     }
   );
